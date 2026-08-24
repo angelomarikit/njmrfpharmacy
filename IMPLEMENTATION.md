@@ -1,6 +1,6 @@
 # NJMRF Messiah Sanare Pharmacy — Implementation Guide
 
-Sales system for **NJMRF Messiah Sanare Pharmacy**. This is a **new React + TypeScript app** that uses the **same Supabase project** already running HM Dormitory.
+Sales system for **NJMRF Messiah Sanare Pharmacy**. This is a **new React + TypeScript app** that uses the **same Supabase project** already running HM Dormitory.ss
 
 HM Dormitory stays a landing-page tenant (`slug = hm-dormitory`). This pharmacy is a second tenant (`slug = njmrf-pharmacy`). Isolation is `site_id` + Row Level Security, not a second database.
 
@@ -13,14 +13,16 @@ Contact: **09457742858**
 
 The HM Dormitory project already created:
 
-| Existing object | Purpose |
-| --- | --- |
-| `sites` | One row per client website. Identified by `slug`. |
-| `site_members` | Admin / owner / editor users for a site |
-| `platform_admins` | Apex super-admin only. Do not put pharmacy staff here. |
-| `is_site_member(site_id)` | RLS helper used by every tenant table |
-| Storage bucket `site-assets` | Public images. Path must start with `{site_id}/...` |
-| Env `VITE_SITE_SLUG` | Tells each deployed frontend which site row to load |
+
+| Existing object              | Purpose                                                |
+| ---------------------------- | ------------------------------------------------------ |
+| `sites`                      | One row per client website. Identified by `slug`.      |
+| `site_members`               | Admin / owner / editor users for a site                |
+| `platform_admins`            | Apex super-admin only. Do not put pharmacy staff here. |
+| `is_site_member(site_id)`    | RLS helper used by every tenant table                  |
+| Storage bucket `site-assets` | Public images. Path must start with `{site_id}/...`    |
+| Env `VITE_SITE_SLUG`         | Tells each deployed frontend which site row to load    |
+
 
 This pharmacy app **reuses** those objects. It **adds** commerce tables. It does **not** reuse `rooms`, `tenants`, `announcements`, or other dormitory tables.
 
@@ -38,6 +40,8 @@ Never hardcode a site UUID in the frontend. Always:
 
 ---
 
+
+
 ## 2. Environment variables
 
 Copy `.env.example` to `.env.local`.
@@ -48,11 +52,13 @@ VITE_SUPABASE_PUBLISHABLE_KEY=
 VITE_SITE_SLUG=njmrf-pharmacy
 ```
 
-| Variable | Where it comes from | Notes |
-| --- | --- | --- |
-| `VITE_SUPABASE_URL` | Same value as HM Dormitory `.env.local` | Supabase → Project Settings → Data API → Project URL |
-| `VITE_SUPABASE_PUBLISHABLE_KEY` | Same value as HM Dormitory | The **anon / publishable** key only |
-| `VITE_SITE_SLUG` | `njmrf-pharmacy` | Different from HM Dormitory’s `hm-dormitory` |
+
+| Variable                        | Where it comes from                     | Notes                                                |
+| ------------------------------- | --------------------------------------- | ---------------------------------------------------- |
+| `VITE_SUPABASE_URL`             | Same value as HM Dormitory `.env.local` | Supabase → Project Settings → Data API → Project URL |
+| `VITE_SUPABASE_PUBLISHABLE_KEY` | Same value as HM Dormitory              | The **anon / publishable** key only                  |
+| `VITE_SITE_SLUG`                | `njmrf-pharmacy`                        | Different from HM Dormitory’s `hm-dormitory`         |
+
 
 Rules:
 
@@ -73,6 +79,8 @@ interface ImportMetaEnv {
 
 ---
 
+
+
 ## 3. Database work (run this first)
 
 Open the **existing** Supabase project used by HM Dormitory.
@@ -89,7 +97,7 @@ order by created_at;
 
 You should see both `hm-dormitory` and `njmrf-pharmacy`.
 
-4. Confirm new tables exist:
+1. Confirm new tables exist:
 
 - `store_settings`
 - `product_categories`
@@ -103,10 +111,12 @@ You should see both `hm-dormitory` and `njmrf-pharmacy`.
 - `order_items`
 - `order_events`
 
-5. Confirm Storage buckets:
+1. Confirm Storage buckets:
 
 - `site-assets` (already exists, public) — products, logo, payment QR
 - `order-proofs` (new, **private**) — customer payment screenshots
+
+
 
 ### 3.1 Create the pharmacy admin
 
@@ -139,14 +149,18 @@ Customers are **not** inserted into `site_members`. They get a row in `customer_
 
 ---
 
+
+
 ## 4. Accounts
 
 Two account types, one Auth system.
 
-| Type | How it is created | Where access is stored | Can do |
-| --- | --- | --- | --- |
-| Admin | Created in Supabase Dashboard, then assigned with SQL | `site_members` | Products, QR, orders, inventory, reports, J&T rates |
-| Customer | Public register / login on the store | `customer_profiles` | Cart, checkout, pay, upload screenshot, view own orders |
+
+| Type     | How it is created                                     | Where access is stored | Can do                                                  |
+| -------- | ----------------------------------------------------- | ---------------------- | ------------------------------------------------------- |
+| Admin    | Created in Supabase Dashboard, then assigned with SQL | `site_members`         | Products, QR, orders, inventory, reports, J&T rates     |
+| Customer | Public register / login on the store                  | `customer_profiles`    | Cart, checkout, pay, upload screenshot, view own orders |
+
 
 After customer registration, the app must insert:
 
@@ -167,31 +181,37 @@ A person can be a customer here and an admin on another site. Route by path, not
 
 ---
 
+
+
 ## 5. What to build
 
-Stack: **React + TypeScript + Vite + Tailwind + React Router + Lucide + `@supabase/supabase-js`**. Same stack as HM Dormitory so the two apps stay easy to maintain.
+Stack: **React + TypeScript + Vite + Tailwind + React Router + Lucide +** `@supabase/supabase-js`. Same stack as HM Dormitory so the two apps stay easy to maintain.
 
 Suggested routes:
 
-| Route | Audience |
-| --- | --- |
-| `/` | Landing page + featured products |
-| `/products` | Catalog, search, category filter |
-| `/products/:slug` | Product detail, add to cart |
-| `/cart` | Cart |
-| `/checkout` | Address / pickup, delivery fee, place order |
-| `/orders/:id/pay` | Show QR + exact amount + upload screenshot |
-| `/account` | Profile, addresses, order history |
-| `/login` `/register` | Customer auth |
-| `/admin` | Admin login |
-| `/admin/dashboard` | Sales totals, low stock, pending payments |
-| `/admin/products` | Shopify-style product list / editor |
-| `/admin/orders` | Order inbox and detail |
-| `/admin/customers` | Customer records |
-| `/admin/delivery` | J&T rate table |
-| `/admin/settings` | QR, account name/number, pickup toggle, store info |
+
+| Route                | Audience                                           |
+| -------------------- | -------------------------------------------------- |
+| `/`                  | Landing page + featured products                   |
+| `/products`          | Catalog, search, category filter                   |
+| `/products/:slug`    | Product detail, add to cart                        |
+| `/cart`              | Cart                                               |
+| `/checkout`          | Address / pickup, delivery fee, place order        |
+| `/orders/:id/pay`    | Show QR + exact amount + upload screenshot         |
+| `/account`           | Profile, addresses, order history                  |
+| `/login` `/register` | Customer auth                                      |
+| `/admin`             | Admin login                                        |
+| `/admin/dashboard`   | Sales totals, low stock, pending payments          |
+| `/admin/products`    | Shopify-style product list / editor                |
+| `/admin/orders`      | Order inbox and detail                             |
+| `/admin/customers`   | Customer records                                   |
+| `/admin/delivery`    | J&T rate table                                     |
+| `/admin/settings`    | QR, account name/number, pickup toggle, store info |
+
 
 ---
+
+
 
 ## 6. Public landing page
 
@@ -210,6 +230,8 @@ Must show:
 Reuse `sites` for logo, address, Facebook, and maps the same way HM Dormitory does. Edit those in **Admin → Settings**.
 
 ---
+
+
 
 ## 7. Shopify-style products (admin)
 
@@ -245,7 +267,11 @@ Stock is the live inventory number. `place_order` decrements it. Cancel / reject
 
 ---
 
+
+
 ## 8. Cart, checkout, QR payment
+
+
 
 ### Cart
 
@@ -297,6 +323,8 @@ const { data, error } = await supabase.rpc('place_order', {
 8. Clears the cart
 9. Returns the order (`status = awaiting_payment`)
 
+
+
 ### Pay with QR
 
 Admin Settings stores:
@@ -338,6 +366,8 @@ Payment proofs are **not** public. Use a signed URL when showing them to the cus
 
 ---
 
+
+
 ## 9. J&T Express delivery
 
 The pharmacy ships with **J&T Express**. Rates depend on destination region and chargeable weight.
@@ -346,18 +376,20 @@ Chargeable weight = the larger of:
 
 - actual weight (sum of `weight_grams * quantity`)
 - volumetric weight = `(L × W × H / 3500) × 1000` grams  
-  `3500` is the usual J&T PH divisor and is stored in `store_settings.volumetric_divisor`
+`3500` is the usual J&T PH divisor and is stored in `store_settings.volumetric_divisor`
 
 Seeded rates assume the parcel **originates in Metro Manila**. They are published 2025/2026 consumer rates and **must be confirmed with the local J&T branch**. Edit them in **Admin → Delivery**.
 
-| Weight | Metro Manila | Luzon | Visayas | Mindanao | Island |
-| --- | ---: | ---: | ---: | ---: | ---: |
-| 0–500 g | ₱85 | ₱95 | ₱100 | ₱105 | ₱115 |
-| 501 g–1 kg | ₱115 | ₱165 | ₱180 | ₱195 | ₱205 |
-| 1.01–3 kg | ₱155 | ₱190 | ₱200 | ₱220 | ₱230 |
-| 3.01–4 kg | ₱225 | ₱280 | ₱300 | ₱330 | ₱340 |
-| 4.01–5 kg | ₱305 | ₱370 | ₱400 | ₱440 | ₱450 |
-| 5.01–6 kg | ₱455 | ₱465 | ₱500 | ₱550 | ₱560 |
+
+| Weight     | Metro Manila | Luzon | Visayas | Mindanao | Island |
+| ---------- | ------------ | ----- | ------- | -------- | ------ |
+| 0–500 g    | ₱85          | ₱95   | ₱100    | ₱105     | ₱115   |
+| 501 g–1 kg | ₱115         | ₱165  | ₱180    | ₱195     | ₱205   |
+| 1.01–3 kg  | ₱155         | ₱190  | ₱200    | ₱220     | ₱230   |
+| 3.01–4 kg  | ₱225         | ₱280  | ₱300    | ₱330     | ₱340   |
+| 4.01–5 kg  | ₱305         | ₱370  | ₱400    | ₱440     | ₱450   |
+| 5.01–6 kg  | ₱455         | ₱465  | ₱500    | ₱550     | ₱560   |
+
 
 Checkout preview (before placing the order):
 
@@ -374,6 +406,8 @@ If the fee is `null`, the weight is above the table. Block checkout and tell the
 If the pharmacy is not in Metro Manila, change `store_settings.origin_region` and replace the rate rows. Do not hardcode pesos in React.
 
 ---
+
+
 
 ## 10. Orders (admin)
 
@@ -424,6 +458,8 @@ Order detail shows:
 
 ---
 
+
+
 ## 11. Inventory, history, reports
 
 **Inventory**
@@ -462,9 +498,11 @@ Optional later: CSV export of `orders` + `order_items` for a date range.
 
 ---
 
+
+
 ## 12. Storage paths
 
-**Public bucket `site-assets`** (reuse existing policies)
+**Public bucket** `site-assets` (reuse existing policies)
 
 ```text
 {site_id}/logo/...
@@ -476,7 +514,7 @@ Optional later: CSV export of `orders` + `order_items` for a date range.
 
 Public visitors can read these. Only `site_members` of that `site_id` can write.
 
-**Private bucket `order-proofs`**
+**Private bucket** `order-proofs`
 
 ```text
 {site_id}/customers/{auth_user_id}/{order_id}-proof.webp
@@ -487,6 +525,8 @@ Only that customer and pharmacy admins can read. Do not put screenshots in `site
 JPG / PNG / WebP. Max 5 MB.
 
 ---
+
+
 
 ## 13. App architecture
 
@@ -512,6 +552,8 @@ Every service function takes `siteId` and filters with `.eq('site_id', siteId)`.
 
 ---
 
+
+
 ## 14. Security rules
 
 - Public (anon) can read the active site, published products, categories, delivery rates, and store settings (so checkout can show the QR).
@@ -530,6 +572,8 @@ Tenant isolation check (do this once after the SQL runs):
 
 ---
 
+
+
 ## 15. Implementation order
 
 Build in this order so each step is testable.
@@ -539,8 +583,8 @@ Build in this order so each step is testable.
 3. **Landing + catalog** — published products, search, filters
 4. **Admin auth + product editor** — add medicines with images, price, stock
 5. **Customer auth** — register, profile, addresses
-6. **Cart + checkout + `place_order`**
-7. **QR settings + payment screenshot + `submit_payment_proof`**
+6. **Cart + checkout +** `place_order`
+7. **QR settings + payment screenshot +** `submit_payment_proof`
 8. **Admin orders** — verify payment, packing, J&T tracking
 9. **Dashboard reports + low stock**
 10. **J&T rate editor** — confirm pesos with the branch
@@ -549,6 +593,8 @@ Build in this order so each step is testable.
 Do not start from the HM Dormitory repo and try to turn rooms into products. New app, same database.
 
 ---
+
+
 
 ## 16. Production deploy
 
@@ -564,13 +610,17 @@ Add `vercel.json` with a SPA rewrite so `/admin` and `/products/:slug` do not 40
 
 ---
 
+
+
 ## 17. Files in this folder
 
-| File | Use |
-| --- | --- |
-| `.env.example` | Copy to `.env.local` |
-| `supabase/migrations/003_pharmacy_commerce.sql` | Run in the shared Supabase SQL Editor |
-| `supabase/assign-njmrf-admin.sql` | Attach the admin Auth user to this slug |
-| `IMPLEMENTATION.md` | This guide |
+
+| File                                            | Use                                     |
+| ----------------------------------------------- | --------------------------------------- |
+| `.env.example`                                  | Copy to `.env.local`                    |
+| `supabase/migrations/003_pharmacy_commerce.sql` | Run in the shared Supabase SQL Editor   |
+| `supabase/assign-njmrf-admin.sql`               | Attach the admin Auth user to this slug |
+| `IMPLEMENTATION.md`                             | This guide                              |
+
 
 When you are ready to build the app, start with step 2 (scaffold) in this same `NJMRF` folder.
