@@ -1,5 +1,5 @@
 import { Link, NavLink, Outlet } from 'react-router-dom'
-import { Mail, Phone, ShoppingBag, UserRound } from 'lucide-react'
+import { Facebook, Mail, Phone, ShoppingBag, UserRound } from 'lucide-react'
 import { BrandLogo } from '@/components/BrandLogo'
 import { PageFade } from '@/components/PageFade'
 import { useAuth } from '@/contexts/AuthContext'
@@ -15,6 +15,7 @@ export function PublicLayout() {
   const { user, customer, isSiteAdmin } = useAuth()
   const phone = site?.phone || '09457742858'
   const email = site?.email || 'njmrf.pharmacy@gmail.com'
+  const facebookUrl = site?.facebook_url || 'https://www.facebook.com/NJMRFPHARMACY'
   const scrolled = useScrolled(12)
 
   if (loading) {
@@ -49,6 +50,15 @@ export function PublicLayout() {
             <a href={`mailto:${email}`} className="inline-flex items-center gap-1.5 text-forest hover:underline">
               <Mail className="h-3.5 w-3.5" />
               {email}
+            </a>
+            <a
+              href={facebookUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-1.5 text-forest hover:underline"
+            >
+              <Facebook className="h-3.5 w-3.5" />
+              @NJMRFPHARMACY
             </a>
           </div>
         </div>
@@ -137,6 +147,15 @@ export function PublicLayout() {
             </a>
             <a href={`mailto:${email}`} className="mt-1 block text-sm text-ink hover:text-forest">
               {email}
+            </a>
+            <a
+              href={facebookUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="mt-1 inline-flex items-center gap-1.5 text-sm text-ink hover:text-forest"
+            >
+              <Facebook className="h-3.5 w-3.5" />
+              @NJMRFPHARMACY
             </a>
             {site.address ? <p className="mt-2 text-sm text-muted">{site.address}</p> : null}
           </div>
